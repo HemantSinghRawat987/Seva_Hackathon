@@ -1,0 +1,492 @@
+/* ─────────────────────────────────────────────────────────────
+   THREE PILLARS — Sticky Scroll Section
+   ───────────────────────────────────────────────────────────── */
+
+.threePillars {
+  background: var(--bg);
+  padding: 0;
+  position: relative;
+}
+
+.sectionIntro {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 84px clamp(2rem, 6vw, 6rem) 28px;
+}
+
+/* Large laptops */
+@media (max-width: 1440px) {
+  .sectionIntro {
+    padding: 72px clamp(1.5rem, 5vw, 5rem) 24px;
+  }
+}
+
+/* Medium laptops */
+@media (max-width: 1200px) {
+  .sectionIntro {
+    padding: 60px clamp(1.5rem, 4vw, 4rem) 20px;
+  }
+}
+
+/* Small laptops */
+@media (max-width: 1024px) {
+  .sectionIntro {
+    padding: 48px clamp(1.25rem, 3vw, 3rem) 16px;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   DESKTOP LAYOUT — Sticky Pair
+   ───────────────────────────────────────────────────────────── */
+
+.pillarsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: start;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Large laptops */
+@media (max-width: 1440px) {
+  .pillarsGrid {
+    gap: 3rem;
+  }
+}
+
+/* Medium laptops */
+@media (max-width: 1200px) {
+  .pillarsGrid {
+    gap: 2.5rem;
+  }
+}
+
+/* Small laptops */
+@media (max-width: 1024px) {
+  .pillarsGrid {
+    gap: 2rem;
+  }
+}
+
+.stickyPanel {
+  position: sticky;
+  top: 10vh;
+  min-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 8px 0 40px clamp(2rem, 6vw, 6rem);
+}
+
+/* Large laptops */
+@media (max-width: 1440px) {
+  .stickyPanel {
+    padding: 8px 0 32px clamp(1.5rem, 5vw, 5rem);
+    min-height: 75vh;
+  }
+}
+
+/* Medium laptops */
+@media (max-width: 1200px) {
+  .stickyPanel {
+    padding: 8px 0 28px clamp(1.5rem, 4vw, 4rem);
+    min-height: 70vh;
+  }
+}
+
+/* Small laptops */
+@media (max-width: 1024px) {
+  .stickyPanel {
+    padding: 8px 0 24px clamp(1.25rem, 3vw, 3rem);
+    min-height: 65vh;
+    top: 8vh;
+  }
+}
+
+.scrollPanel {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   LEFT PANEL — Text + Illustration
+   ───────────────────────────────────────────────────────────── */
+
+.eyebrow {
+  font-family: 'General Sans', sans-serif;
+  font-weight: 600;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 16px;
+}
+
+.headline {
+  font-family: 'Bricolage Grotesque', Georgia, serif;
+  font-weight: 800;
+  font-size: clamp(2.5rem, 5vw, 4.5rem);
+  line-height: 0.92;
+  letter-spacing: -0.03em;
+  color: var(--text);
+  max-width: 12ch;
+  margin-bottom: 24px;
+}
+
+/* Medium laptops */
+@media (max-width: 1200px) {
+  .headline {
+    font-size: clamp(2rem, 4vw, 3.5rem);
+    margin-bottom: 20px;
+  }
+}
+
+/* Small laptops */
+@media (max-width: 1024px) {
+  .headline {
+    font-size: clamp(1.75rem, 3.5vw, 3rem);
+    margin-bottom: 16px;
+  }
+}
+
+.subtext {
+  font-family: 'General Sans', sans-serif;
+  font-size: 1rem;
+  color: var(--text-muted);
+  max-width: 36ch;
+  line-height: 1.75;
+  margin-bottom: 20px;
+}
+
+.illustrationArea {
+  width: clamp(420px, 34vw, 520px);
+  height: clamp(420px, 34vw, 520px);
+  overflow: hidden;
+  position: relative;
+  margin-top: 0;
+}
+
+/* Large laptops */
+@media (max-width: 1440px) {
+  .illustrationArea {
+    width: clamp(360px, 30vw, 460px);
+    height: clamp(360px, 30vw, 460px);
+  }
+}
+
+/* Medium laptops */
+@media (max-width: 1200px) {
+  .illustrationArea {
+    width: clamp(300px, 28vw, 380px);
+    height: clamp(300px, 28vw, 380px);
+  }
+}
+
+/* Small laptops */
+@media (max-width: 1024px) {
+  .illustrationArea {
+    width: clamp(260px, 26vw, 320px);
+    height: clamp(260px, 26vw, 320px);
+  }
+}
+
+.illustrationWrapper {
+  position: absolute;
+  inset: 0;
+}
+
+.illustrationSvg {
+  width: 100%;
+  height: 100%;
+}
+
+.railNav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+  width: min(100%, 520px);
+}
+
+.railButton {
+  border: 1px solid var(--border);
+  background: var(--bg-2);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-muted);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.railButton:hover {
+  border-color: rgba(212, 98, 42, 0.42);
+  color: var(--text);
+}
+
+.railButtonActive {
+  background: rgba(212, 98, 42, 0.1);
+  border-color: rgba(212, 98, 42, 0.5);
+  color: var(--accent);
+}
+
+.railNumber {
+  font-family: 'Noto Sans Devanagari', sans-serif;
+  font-weight: 900;
+  font-size: 0.9rem;
+}
+
+.railLabel {
+  font-family: 'General Sans', sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   RIGHT PANEL — Subsections
+   ───────────────────────────────────────────────────────────── */
+
+.subsection {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 64px clamp(2rem, 6vw, 6rem) 80px 0;
+}
+
+/* Large laptops */
+@media (max-width: 1440px) {
+  .subsection {
+    padding: 56px clamp(1.5rem, 5vw, 5rem) 64px 0;
+    min-height: 90vh;
+  }
+}
+
+/* Medium laptops */
+@media (max-width: 1200px) {
+  .subsection {
+    padding: 48px clamp(1.5rem, 4vw, 4rem) 56px 0;
+    min-height: 85vh;
+  }
+}
+
+/* Small laptops */
+@media (max-width: 1024px) {
+  .subsection {
+    padding: 40px clamp(1.25rem, 3vw, 3rem) 48px 0;
+    min-height: 80vh;
+  }
+}
+
+.subsectionEyebrow {
+  font-family: 'General Sans', sans-serif;
+  font-weight: 600;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.devanagari {
+  font-family: 'Noto Sans Devanagari', sans-serif;
+  font-weight: 900;
+  font-size: 0.875rem;
+  letter-spacing: 0;
+}
+
+.subsectionHeadline {
+  font-family: 'Bricolage Grotesque', Georgia, serif;
+  font-weight: 700;
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  margin-bottom: 16px;
+}
+
+/* Medium laptops */
+@media (max-width: 1200px) {
+  .subsectionHeadline {
+    font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+    margin-bottom: 14px;
+  }
+}
+
+/* Small laptops */
+@media (max-width: 1024px) {
+  .subsectionHeadline {
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    margin-bottom: 12px;
+  }
+}
+
+.subsectionBody {
+  font-family: 'General Sans', sans-serif;
+  font-size: 1rem;
+  line-height: 1.75;
+  color: var(--text-muted);
+  max-width: 48ch;
+  margin-bottom: 24px;
+}
+
+/* Medium laptops */
+@media (max-width: 1200px) {
+  .subsectionBody {
+    font-size: 0.9375rem;
+    margin-bottom: 20px;
+  }
+}
+
+/* Small laptops */
+@media (max-width: 1024px) {
+  .subsectionBody {
+    font-size: 0.875rem;
+    margin-bottom: 16px;
+    max-width: 42ch;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   CHIPS
+   ───────────────────────────────────────────────────────────── */
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 6px 14px;
+  font-family: 'General Sans', sans-serif;
+  font-weight: 500;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+
+.chip:hover {
+  background: var(--accent-light);
+  border-color: var(--accent);
+  color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.chipActive {
+  background: rgba(212, 98, 42, 0.1);
+  border-color: rgba(212, 98, 42, 0.5);
+  color: var(--accent);
+}
+
+.chip:focus-visible {
+  outline: none;
+}
+
+.chip svg {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+}
+
+.interactionHint {
+  margin-top: 10px;
+  font-family: 'General Sans', sans-serif;
+  font-size: 0.72rem;
+  color: rgba(99, 71, 44, 0.72);
+  letter-spacing: 0.02em;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   MOBILE LAYOUT
+   ───────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .pillarsGrid {
+    display: none;
+  }
+
+  .mobileContainer {
+    display: block;
+    padding: clamp(2rem, 6vw, 4rem);
+  }
+
+  .sectionIntro {
+    padding: 56px clamp(2rem, 6vw, 4rem) 18px;
+  }
+
+  .stickyPanel {
+    position: static;
+    min-height: auto;
+    padding: 0;
+  }
+
+  .railNav {
+    display: none;
+  }
+
+  .mobileSubsection {
+    padding: 2rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .mobileSubsection:last-child {
+    border-bottom: none;
+  }
+
+  .mobileIllustration {
+    width: 320px;
+    height: 320px;
+    margin: 0 auto 1.5rem;
+    overflow: hidden;
+  }
+
+  .mobileIllustration .illustrationWrapper {
+    position: relative;
+  }
+
+  .mobileIllustration svg {
+    width: 320px;
+    height: 320px;
+  }
+
+  .mobileSubsection .subsectionEyebrow {
+    justify-content: center;
+  }
+
+  .mobileSubsection .subsectionHeadline {
+    text-align: center;
+  }
+
+  .mobileSubsection .subsectionBody {
+    text-align: center;
+    max-width: none;
+  }
+
+  .mobileSubsection .chips {
+    justify-content: center;
+  }
+
+  .subsection {
+    min-height: auto;
+    padding: 2rem 0;
+  }
+}

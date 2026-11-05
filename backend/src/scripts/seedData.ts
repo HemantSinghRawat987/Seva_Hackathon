@@ -1,0 +1,870 @@
+/**
+ * Seed Data Script
+ * Populates Firestore with sample need reports for testing and demos.
+ */
+
+import dotenv from 'dotenv';
+dotenv.config();
+
+import { getFirestore } from '../config/firebase';
+import { IntakeSource, NeedCategory, ReportStatus, UrgencyLevel, type NeedCategoryType, type NeedReport, type UrgencyLevelType } from '../models/NeedReport';
+import { urgencyEnumToBase } from '../services/urgencyMultipliers';
+import { VolunteerAvailability } from '../models/Volunteer';
+import { DispatchTaskStatus } from '../models/DispatchTask';
+
+const firestore = getFirestore();
+
+type SeedLocation = {
+  latitude: number;
+  longitude: number;
+  address: string;
+  district: string;
+  state: string;
+};
+
+type SeedUrgencyBreakdown = {
+  base: number;
+  weatherMult: number;
+  vulnerabilityMult: number;
+  timeMult: number;
+  finalScore: number;
+  weatherReason: string;
+  vulnerabilityReason: string;
+  timeReason: string;
+};
+
+type SeedNeedReport = NeedReport & {
+  id: string;
+  urgencyScore: number;
+  urgencyBreakdown: SeedUrgencyBreakdown;
+  urgencyDecayCount: number;
+  urgencyDecayAlert: boolean;
+  report_count: number;
+  merged_from: string[];
+  systemic: boolean;
+  possible_duplicate: boolean;
+  reporterConfirmed?: boolean;
+};
+
+type SeedVolunteer = {
+  id: string;
+  userId: string;
+  ngoId: string;
+  ngoName: string;
+  name: string;
+  phoneNumber: string;
+  preferredLanguage: string;
+  isActive: boolean;
+  location: {
+    latitude: number;
+    longitude: number;
+    district: string;
+    state: string;
+    updatedAt: string;
+  };
+  skills: string[];
+  categories: NeedCategoryType[];
+  certifications: string[];
+  availability: string;
+  maxServiceableDistanceKm: number;
+  supportsUnderservedZones: boolean;
+  ngoVolunteerCount: number;
+  stats: {
+    assignedTasks: number;
+    completedTasks: number;
+    avgBeneficiaryRating: number;
+    reliabilityScore: number;
+    activeTasks: number;
+    last90dAssignedTasks: number;
+    last90dCompletedTasks: number;
+  };
+  createdAt: string;
+  updatedAt: string;
+};
+
+type SeedInventoryItem = {
+  itemId: string;
+  volunteerId: string;
+  itemName: string;
+  quantity: number;
+  unit: string;
+  categoriesRelevant: NeedCategoryType[];
+  expiryDate: string | null;
+  updatedAt: string;
+};
+
+type SeedDispatchDecision = {
+  volunteerId: string;
+  volunteerName: string;
+  totalScore: number;
+  componentScores: {
+    proximity: number;
+    skillFit: number;
+    availability: number;
+    reliability: number;
+    equityBoost: number;
+    needUrgency: number;
+  };
+  distanceKm: number;
+  explanation: string;
+};
+
+type SeedDispatchTask = {
+  id: string;
+  needReportId: string;
+  needDescription: string;
+  category: NeedCategoryType;
+  urgency: UrgencyLevelType;
+  status: string;
+  candidateVolunteerIds: string[];
+  rankedDecisions: SeedDispatchDecision[];
+  currentInviteIndex: number;
+  acceptedVolunteerId?: string;
+  acceptedAt?: string;
+  escalated: boolean;
+  escalatedReason?: string;
+  escalatedAt?: string;
+  coordinatorOverride: {
+    overridden: boolean;
+    coordinatorId?: string;
+    reason?: string;
+    selectedVolunteerId?: string;
+    at?: string;
+  };
+  invitationHistory: Array<{
+    volunteerId: string;
+    invitedAt: string;
+    status: 'pending' | 'accepted' | 'declined' | 'expired';
+    respondedAt?: string;
+  }>;
+  ngoId: string;
+  assignedNgoId: string;
+  verificationConfidence?: number;
+  verificationReason?: string;
+  verificationRejected?: boolean;
+  reporterConfirmed?: boolean;
+  pendingCoordinatorReview?: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+const categories: NeedCategoryType[] = [
+  NeedCategory.EMERGENCY,
+  NeedCategory.FOOD_NUTRITION,
+  NeedCategory.HEALTH,
+  NeedCategory.EDUCATION,
+  NeedCategory.WATER_SANITATION,
+  NeedCategory.SHELTER,
+  NeedCategory.WOMEN_CHILD,
+  NeedCategory.ENVIRONMENT,
+];
+
+const urgencyLevels: UrgencyLevelType[] = [
+  UrgencyLevel.CRITICAL,
+  UrgencyLevel.HIGH,
+  UrgencyLevel.MEDIUM,
+  UrgencyLevel.LOW,
+];
+
+const statuses = [
+  ReportStatus.CLASSIFIED,
+  ReportStatus.DISPATCHED,
+  ReportStatus.IN_PROGRESS,
+  ReportStatus.RESOLVED,
+];
+
+const sampleLocations: SeedLocation[] = [
+  {
+    latitude: 28.5453,
+    longitude: 77.2734,
+    address: 'Okhla, South East Delhi, Delhi',
+    district: 'South East Delhi',
+    state: 'Delhi',
+  },
+  {
+    latitude: 28.5337,
+    longitude: 77.2912,
+    address: 'Sarita Vihar, South East Delhi, Delhi',
+    district: 'South East Delhi',
+    state: 'Delhi',
+  },
+  {
+    latitude: 28.5677,
+    longitude: 77.2434,
+    address: 'Lajpat Nagar, South East Delhi, Delhi',
+    district: 'South East Delhi',
+    state: 'Delhi',
+  },
+  {
+    latitude: 28.6729,
+    longitude: 77.2691,
+    address: 'Seelampur, North East Delhi, Delhi',
+    district: 'North East Delhi',
+    state: 'Delhi',
+  },
+  {
+    latitude: 28.6967,
+    longitude: 77.2861,
+    address: 'Mustafabad, North East Delhi, Delhi',
+    district: 'North East Delhi',
+    state: 'Delhi',
+  },
+  {
+    latitude: 28.7052,
+    longitude: 77.2846,
+    address: 'Yamuna Vihar, North East Delhi, Delhi',
+    district: 'North East Delhi',
+    state: 'Delhi',
+  },
+  {
+    latitude: 28.7041,
+    longitude: 77.2668,
+    address: 'Bhajanpura, North East Delhi, Delhi',
+    district: 'North East Delhi',
+    state: 'Delhi',
+  },
+  {
+    latitude: 28.7494,
+    longitude: 77.0565,
+    address: 'Rohini, North West Delhi, Delhi',
+    district: 'North West Delhi',
+    state: 'Delhi',
+  },
+  {
+    latitude: 28.5921,
+    longitude: 77.046,
+    address: 'Dwarka, South West Delhi, Delhi',
+    district: 'South West Delhi',
+    state: 'Delhi',
+  },
+  {
+    latitude: 28.5208,
+    longitude: 77.1855,
+    address: 'Mehrauli, South Delhi, Delhi',
+    district: 'South Delhi',
+    state: 'Delhi',
+  },
+];
+
+const sampleDescriptions: Record<NeedCategoryType, string[]> = {
+  emergency: [
+    'Road accident near the flyover. Two people need first aid and quick transport support.',
+    'A major electrical fire has displaced families and immediate response is needed.',
+    'Flood water entered low-lying lanes and residents need urgent rescue support.',
+  ],
+  food_nutrition: [
+    'Cooked meal distribution is needed for families who missed work for three days.',
+    'Children in the basti need dry ration kits and milk support this evening.',
+    'A community kitchen is needed for migrant workers affected by heavy rain.',
+  ],
+  health: [
+    'A medicine refill camp is needed for fever and dehydration cases in the area.',
+    'Pregnant women in the lane need access to prenatal check-ups and transport support.',
+    'A mobile health camp is needed because nearby clinics are overcrowded today.',
+  ],
+  education: [
+    'Students need school bags, notebooks, and a temporary learning corner after repairs.',
+    'Children are missing classes because textbooks and uniforms have not arrived.',
+    'Local volunteers need supplies for an evening tutoring camp in the settlement.',
+  ],
+  water_sanitation: [
+    'Community taps are dry and families need safe drinking water tankers today.',
+    'Drain overflow has contaminated the lane and urgent sanitation cleanup is needed.',
+    'Water purification tablets and buckets are needed in the cluster after flooding.',
+  ],
+  shelter: [
+    'Rain damaged roofs in the cluster and families need tarpaulins and blankets.',
+    'Temporary shelter material is needed for displaced families near the main road.',
+    'An elderly couple needs urgent roof repair support before the next rain spell.',
+  ],
+  women_child: [
+    'Women in the area need private support kits and safe referral assistance.',
+    'A child protection case needs discreet intervention and follow-up coordination.',
+    'Mothers in the settlement need baby food, sanitary pads, and care support.',
+  ],
+  environment: [
+    'Waste has piled up near the drain and community cleanup supplies are needed.',
+    'Residents are reporting heavy smoke and pollution from unmanaged burning nearby.',
+    'Local volunteers need gloves, bags, and tools for a cleanup drive this weekend.',
+  ],
+};
+
+function buildUrgencyBreakdown(
+  urgency: UrgencyLevelType,
+  weatherMult: number,
+  vulnerabilityMult: number,
+  timeMult: number,
+  weatherReason: string,
+  vulnerabilityReason: string,
+  timeReason: string
+): SeedUrgencyBreakdown {
+  const base = urgencyEnumToBase(urgency);
+  const finalScore = Number((base * weatherMult * vulnerabilityMult * timeMult).toFixed(2));
+
+  return {
+    base,
+    weatherMult,
+    vulnerabilityMult,
+    timeMult,
+    finalScore,
+    weatherReason,
+    vulnerabilityReason,
+    timeReason,
+  };
+}
+
+function getLocation(index: number): SeedLocation {
+  return sampleLocations[index % sampleLocations.length];
+}
+
+function jitter(value: number, range: number): number {
+  return Number((value + (Math.random() - 0.5) * range).toFixed(6));
+}
+
+function buildDuplicateClusterReports(): SeedNeedReport[] {
+  const now = Date.now();
+  const baseLocation = sampleLocations[0];
+  const descriptions = [
+    'Community taps are dry in the Okhla cluster and residents need safe drinking water today.',
+    'No clean water is available in the Okhla lane cluster and tanker support is urgently needed.',
+    'Families in the Okhla settlement are without clean water and need tankers plus purification tablets.',
+  ];
+
+  return descriptions.map((description, index) => {
+    const createdAt = new Date(now - (index + 1) * 45 * 60 * 1000).toISOString();
+    const urgencyBreakdown = buildUrgencyBreakdown(
+      UrgencyLevel.HIGH,
+      1.3,
+      1.2,
+      1.0,
+      'Flooding increases water-access risk',
+      'Medium-vulnerability zone (Okhla, index: 0.52)',
+      'Daytime (14:00 hrs)'
+    );
+
+    return {
+      id: `seed-report-${String(index + 1).padStart(3, '0')}`,
+      reporterId: `seed-user-${index + 1}`,
+      category: NeedCategory.WATER_SANITATION,
+      urgency: UrgencyLevel.HIGH,
+      description,
+      estimatedPeopleAffected: 35 + index * 5,
+      location: {
+        latitude: jitter(baseLocation.latitude, 0.0025),
+        longitude: jitter(baseLocation.longitude, 0.0025),
+        address: baseLocation.address,
+        district: baseLocation.district,
+        state: baseLocation.state,
+      },
+      photoUrls: [],
+      source: IntakeSource.WEB_FORM,
+      status: ReportStatus.CLASSIFIED,
+      language: 'en',
+      urgencyScore: urgencyBreakdown.finalScore,
+      urgencyBreakdown,
+      urgencyDecayCount: 0,
+      urgencyDecayAlert: false,
+      report_count: 1,
+      merged_from: [],
+      systemic: false,
+      possible_duplicate: false,
+      isOfflineSubmission: false,
+      isPrivate: false,
+      createdAt,
+      updatedAt: createdAt,
+    };
+  });
+}
+
+function buildGeneralReport(index: number): SeedNeedReport {
+  const category = categories[index % categories.length];
+  const urgency = urgencyLevels[index % urgencyLevels.length];
+  const status = statuses[index % statuses.length];
+  const location = getLocation(index + 3);
+  const descriptionOptions = sampleDescriptions[category];
+  const description = descriptionOptions[index % descriptionOptions.length];
+  const createdAtMs = Date.now() - (index + 2) * 3 * 60 * 60 * 1000;
+  const createdAt = new Date(createdAtMs).toISOString();
+  const updatedAt = new Date(createdAtMs + 75 * 60 * 1000).toISOString();
+
+  const weatherMult = status === ReportStatus.RESOLVED ? 1.0 : urgency === UrgencyLevel.CRITICAL ? 1.4 : 1.1;
+  const vulnerabilityMult = location.district.includes('North East') ? 1.2 : 1.0;
+  const timeMult = urgency === UrgencyLevel.CRITICAL ? 1.3 : 1.0;
+  const urgencyBreakdown = buildUrgencyBreakdown(
+    urgency,
+    weatherMult,
+    vulnerabilityMult,
+    timeMult,
+    weatherMult > 1 ? 'Weather stress is increasing local severity' : 'Normal weather (31°C)',
+    vulnerabilityMult > 1
+      ? `Medium-vulnerability zone (${location.district}, index: 0.56)`
+      : `Standard zone (${location.district}, index: 0.31)`,
+    timeMult > 1 ? 'Night-time severity (23:00 hrs) — services unavailable' : 'Daytime (11:00 hrs)'
+  );
+
+  return {
+    id: `seed-report-${String(index + 1).padStart(3, '0')}`,
+    reporterId: `seed-user-${(index % 8) + 1}`,
+    category,
+    urgency,
+    description,
+    estimatedPeopleAffected: 12 + (index % 7) * 9,
+    location: {
+      latitude: jitter(location.latitude, 0.006),
+      longitude: jitter(location.longitude, 0.006),
+      address: location.address,
+      district: location.district,
+      state: location.state,
+    },
+    photoUrls: [],
+    source: index % 3 === 0 ? IntakeSource.VOICE : index % 3 === 1 ? IntakeSource.PHOTO : IntakeSource.WEB_FORM,
+    status,
+    language: index % 2 === 0 ? 'en' : 'hi',
+    assignedNgoId:
+      status === ReportStatus.DISPATCHED || status === ReportStatus.IN_PROGRESS || status === ReportStatus.RESOLVED
+        ? `ngo-${(index % 3) + 1}`
+        : undefined,
+    assignedVolunteerId:
+      status === ReportStatus.IN_PROGRESS || status === ReportStatus.RESOLVED
+        ? `volunteer-${(index % 4) + 1}`
+        : undefined,
+    resolvedAt: status === ReportStatus.RESOLVED ? new Date(createdAtMs + 6 * 60 * 60 * 1000).toISOString() : undefined,
+    urgencyScore: urgencyBreakdown.finalScore,
+    urgencyBreakdown,
+    urgencyDecayCount: 0,
+    urgencyDecayAlert: false,
+    report_count: 1,
+    merged_from: [],
+    systemic: false,
+    possible_duplicate: false,
+    isOfflineSubmission: false,
+    isPrivate: category === NeedCategory.WOMEN_CHILD,
+    createdAt,
+    updatedAt,
+  };
+}
+
+function buildSeedReports(count: number): SeedNeedReport[] {
+  const duplicateCluster = buildDuplicateClusterReports();
+  const reports: SeedNeedReport[] = [...duplicateCluster];
+
+  while (reports.length < count) {
+    reports.push(buildGeneralReport(reports.length));
+  }
+
+  return reports.slice(0, count);
+}
+
+function buildSeedVolunteers(): SeedVolunteer[] {
+  const now = new Date().toISOString();
+
+  return [
+    {
+      id: 'seed-volunteer-001',
+      userId: 'seed-volunteer-001',
+      ngoId: 'ngo-1',
+      ngoName: 'Night Relief Collective',
+      name: 'Farah Khan',
+      phoneNumber: '+919900000001',
+      preferredLanguage: 'en',
+      isActive: true,
+      location: {
+        latitude: 28.5458,
+        longitude: 77.2721,
+        district: 'South East Delhi',
+        state: 'Delhi',
+        updatedAt: now,
+      },
+      skills: ['triage', 'food distribution', 'community coordination'],
+      categories: [NeedCategory.FOOD_NUTRITION, NeedCategory.WATER_SANITATION, NeedCategory.SHELTER],
+      certifications: ['First Aid'],
+      availability: VolunteerAvailability.FREE,
+      maxServiceableDistanceKm: 18,
+      supportsUnderservedZones: true,
+      ngoVolunteerCount: 24,
+      stats: {
+        assignedTasks: 18,
+        completedTasks: 16,
+        avgBeneficiaryRating: 4.7,
+        reliabilityScore: 0.92,
+        activeTasks: 0,
+        last90dAssignedTasks: 18,
+        last90dCompletedTasks: 16,
+      },
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: 'seed-volunteer-002',
+      userId: 'seed-volunteer-002',
+      ngoId: 'ngo-2',
+      ngoName: 'Sehat Saathi Trust',
+      name: 'Arjun Dabas',
+      phoneNumber: '+919900000002',
+      preferredLanguage: 'hi',
+      isActive: true,
+      location: {
+        latitude: 28.6725,
+        longitude: 77.2681,
+        district: 'North East Delhi',
+        state: 'Delhi',
+        updatedAt: now,
+      },
+      skills: ['first aid', 'medicine handoff', 'field logistics'],
+      categories: [NeedCategory.HEALTH, NeedCategory.EMERGENCY, NeedCategory.WATER_SANITATION],
+      certifications: ['First Aid', 'Disaster Response'],
+      availability: VolunteerAvailability.FREE,
+      maxServiceableDistanceKm: 20,
+      supportsUnderservedZones: true,
+      ngoVolunteerCount: 31,
+      stats: {
+        assignedTasks: 22,
+        completedTasks: 20,
+        avgBeneficiaryRating: 4.8,
+        reliabilityScore: 0.95,
+        activeTasks: 0,
+        last90dAssignedTasks: 22,
+        last90dCompletedTasks: 20,
+      },
+      createdAt: now,
+      updatedAt: now,
+    },
+  ];
+}
+
+function buildSeedInventoryItems(): SeedInventoryItem[] {
+  const now = new Date().toISOString();
+
+  return [
+    {
+      itemId: 'rice',
+      volunteerId: 'seed-volunteer-001',
+      itemName: 'rice',
+      quantity: 8,
+      unit: 'kg',
+      categoriesRelevant: [NeedCategory.FOOD_NUTRITION],
+      expiryDate: null,
+      updatedAt: now,
+    },
+    {
+      itemId: 'water_can',
+      volunteerId: 'seed-volunteer-001',
+      itemName: 'water can',
+      quantity: 3,
+      unit: 'units',
+      categoriesRelevant: [NeedCategory.WATER_SANITATION],
+      expiryDate: null,
+      updatedAt: now,
+    },
+    {
+      itemId: 'blanket',
+      volunteerId: 'seed-volunteer-001',
+      itemName: 'blanket',
+      quantity: 4,
+      unit: 'units',
+      categoriesRelevant: [NeedCategory.SHELTER],
+      expiryDate: null,
+      updatedAt: now,
+    },
+    {
+      itemId: 'first_aid_kit',
+      volunteerId: 'seed-volunteer-002',
+      itemName: 'first aid kit',
+      quantity: 2,
+      unit: 'units',
+      categoriesRelevant: [NeedCategory.HEALTH, NeedCategory.EMERGENCY],
+      expiryDate: null,
+      updatedAt: now,
+    },
+    {
+      itemId: 'ors',
+      volunteerId: 'seed-volunteer-002',
+      itemName: 'ORS',
+      quantity: 12,
+      unit: 'packets',
+      categoriesRelevant: [NeedCategory.HEALTH, NeedCategory.WATER_SANITATION],
+      expiryDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
+      updatedAt: now,
+    },
+    {
+      itemId: 'medicines',
+      volunteerId: 'seed-volunteer-002',
+      itemName: 'medicines',
+      quantity: 9,
+      unit: 'units',
+      categoriesRelevant: [NeedCategory.HEALTH],
+      expiryDate: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000).toISOString(),
+      updatedAt: now,
+    },
+    {
+      itemId: 'dev_water_can',
+      volunteerId: 'dev-user-001',
+      itemName: 'water can',
+      quantity: 2,
+      unit: 'units',
+      categoriesRelevant: [NeedCategory.WATER_SANITATION],
+      expiryDate: null,
+      updatedAt: now,
+    },
+    {
+      itemId: 'dev_first_aid_kit',
+      volunteerId: 'dev-user-001',
+      itemName: 'first aid kit',
+      quantity: 1,
+      unit: 'units',
+      categoriesRelevant: [NeedCategory.HEALTH, NeedCategory.EMERGENCY],
+      expiryDate: null,
+      updatedAt: now,
+    },
+  ];
+}
+
+function buildDispatchDecision(
+  volunteerId: string,
+  volunteerName: string,
+  totalScore: number,
+  distanceKm: number,
+  explanation: string
+): SeedDispatchDecision {
+  return {
+    volunteerId,
+    volunteerName,
+    totalScore,
+    componentScores: {
+      proximity: Math.max(0.4, Math.min(1, totalScore + 0.03)),
+      skillFit: Math.max(0.45, Math.min(1, totalScore + 0.01)),
+      availability: 1,
+      reliability: Math.max(0.5, Math.min(1, totalScore + 0.02)),
+      equityBoost: 0.12,
+      needUrgency: Math.max(0.5, Math.min(1, totalScore + 0.04)),
+    },
+    distanceKm,
+    explanation,
+  };
+}
+
+function asIsoString(value: string | Date | undefined): string {
+  if (!value) return new Date().toISOString();
+  return value instanceof Date ? value.toISOString() : value;
+}
+
+function buildSeedDispatchTasks(reports: SeedNeedReport[]): SeedDispatchTask[] {
+  const volunteerDirectory = [
+    { id: 'seed-volunteer-001', name: 'Farah Khan', ngoId: 'ngo-1', fallbackDistanceKm: 0.4 },
+    { id: 'seed-volunteer-002', name: 'Arjun Dabas', ngoId: 'ngo-2', fallbackDistanceKm: 0.7 },
+  ];
+
+  const completedReports = reports.filter((report) => report.status === ReportStatus.RESOLVED).slice(0, 5);
+  const activeReports = reports.filter((report) => report.status === ReportStatus.IN_PROGRESS).slice(0, 2);
+  const escalatedReport = reports.find((report) => report.status === ReportStatus.DISPATCHED) || reports[0];
+  const tasks: SeedDispatchTask[] = [];
+
+  completedReports.forEach((report, index) => {
+    const volunteer = volunteerDirectory[index % volunteerDirectory.length];
+    const createdAt = asIsoString(report.createdAt);
+    const acceptedAt = new Date(new Date(createdAt).getTime() + 20 * 60 * 1000).toISOString();
+    const updatedAt = asIsoString(report.resolvedAt || report.updatedAt);
+
+    report.assignedVolunteerId = volunteer.id;
+    report.assignedNgoId = volunteer.ngoId;
+    report.reporterConfirmed = true;
+
+    tasks.push({
+      id: `seed-task-${String(index + 1).padStart(3, '0')}`,
+      needReportId: report.id,
+      needDescription: report.description,
+      category: report.category,
+      urgency: report.urgency,
+      status: DispatchTaskStatus.COMPLETED,
+      candidateVolunteerIds: volunteerDirectory.map((entry) => entry.id),
+      rankedDecisions: [
+        buildDispatchDecision(volunteer.id, volunteer.name, 0.92, volunteer.fallbackDistanceKm, `${volunteer.name} - nearby, stocked, high reliability`),
+        buildDispatchDecision(volunteerDirectory[(index + 1) % volunteerDirectory.length].id, volunteerDirectory[(index + 1) % volunteerDirectory.length].name, 0.79, 1.1, 'Strong backup candidate with slower ETA'),
+      ],
+      currentInviteIndex: 0,
+      acceptedVolunteerId: volunteer.id,
+      acceptedAt,
+      escalated: false,
+      coordinatorOverride: { overridden: false },
+      invitationHistory: [{ volunteerId: volunteer.id, invitedAt: createdAt, status: 'accepted', respondedAt: acceptedAt }],
+      ngoId: volunteer.ngoId,
+      assignedNgoId: volunteer.ngoId,
+      verificationConfidence: 0.86 + index * 0.01,
+      verificationReason: 'Seeded completion evidence accepted for demo KPI coverage.',
+      verificationRejected: false,
+      reporterConfirmed: true,
+      pendingCoordinatorReview: false,
+      createdAt,
+      updatedAt,
+    });
+  });
+
+  activeReports.forEach((report, index) => {
+    const volunteer = volunteerDirectory[index % volunteerDirectory.length];
+    const createdAt = asIsoString(report.createdAt);
+    const acceptedAt = new Date(new Date(createdAt).getTime() + 15 * 60 * 1000).toISOString();
+
+    report.assignedVolunteerId = volunteer.id;
+    report.assignedNgoId = volunteer.ngoId;
+
+    tasks.push({
+      id: `seed-task-${String(tasks.length + 1).padStart(3, '0')}`,
+      needReportId: report.id,
+      needDescription: report.description,
+      category: report.category,
+      urgency: report.urgency,
+      status: DispatchTaskStatus.ACCEPTED,
+      candidateVolunteerIds: volunteerDirectory.map((entry) => entry.id),
+      rankedDecisions: [
+        buildDispatchDecision(volunteer.id, volunteer.name, 0.88, volunteer.fallbackDistanceKm, `${volunteer.name} - on-route and best category fit`),
+        buildDispatchDecision(volunteerDirectory[(index + 1) % volunteerDirectory.length].id, volunteerDirectory[(index + 1) % volunteerDirectory.length].name, 0.76, 1.4, 'Backup responder for overflow handling'),
+      ],
+      currentInviteIndex: 0,
+      acceptedVolunteerId: volunteer.id,
+      acceptedAt,
+      escalated: false,
+      coordinatorOverride: { overridden: false },
+      invitationHistory: [{ volunteerId: volunteer.id, invitedAt: createdAt, status: 'accepted', respondedAt: acceptedAt }],
+      ngoId: volunteer.ngoId,
+      assignedNgoId: volunteer.ngoId,
+      pendingCoordinatorReview: false,
+      createdAt,
+      updatedAt: asIsoString(report.updatedAt),
+    });
+  });
+
+  if (escalatedReport) {
+    tasks.push({
+      id: `seed-task-${String(tasks.length + 1).padStart(3, '0')}`,
+      needReportId: escalatedReport.id,
+      needDescription: escalatedReport.description,
+      category: escalatedReport.category,
+      urgency: escalatedReport.urgency,
+      status: DispatchTaskStatus.ESCALATED,
+      candidateVolunteerIds: volunteerDirectory.map((entry) => entry.id),
+      rankedDecisions: [
+        buildDispatchDecision('seed-volunteer-002', 'Arjun Dabas', 0.82, 0.9, 'Initial match timed out and was escalated for coordinator attention'),
+      ],
+      currentInviteIndex: 1,
+      escalated: true,
+      escalatedReason: 'No volunteer response within SLA window.',
+      escalatedAt: asIsoString(escalatedReport.updatedAt),
+      coordinatorOverride: { overridden: false },
+      invitationHistory: [{ volunteerId: 'seed-volunteer-002', invitedAt: asIsoString(escalatedReport.createdAt), status: 'expired' }],
+      ngoId: escalatedReport.assignedNgoId || 'ngo-2',
+      assignedNgoId: escalatedReport.assignedNgoId || 'ngo-2',
+      pendingCoordinatorReview: false,
+      createdAt: asIsoString(escalatedReport.createdAt),
+      updatedAt: asIsoString(escalatedReport.updatedAt),
+    });
+  }
+
+  return tasks;
+}
+
+async function generateSeedReports(count: number = 24) {
+  console.log(`Generating ${count} seed reports...`);
+
+  const reports = buildSeedReports(count);
+  const dispatchTasks = buildSeedDispatchTasks(reports);
+  const batch = firestore.batch();
+
+  for (const report of reports) {
+    const docRef = firestore.collection('needReports').doc(report.id);
+    batch.set(docRef, JSON.parse(JSON.stringify(report)), { merge: true });
+  }
+
+  for (const task of dispatchTasks) {
+    const docRef = firestore.collection('dispatchTasks').doc(task.id);
+    batch.set(docRef, JSON.parse(JSON.stringify(task)), { merge: true });
+  }
+
+  await batch.commit();
+  console.log(`✅ Successfully upserted ${reports.length} seed reports and ${dispatchTasks.length} dispatch tasks.`);
+}
+
+async function generateSeedVolunteersAndInventory() {
+  const volunteers = buildSeedVolunteers();
+  const inventoryItems = buildSeedInventoryItems();
+  const batch = firestore.batch();
+
+  for (const volunteer of volunteers) {
+    batch.set(firestore.collection('volunteers').doc(volunteer.id), JSON.parse(JSON.stringify(volunteer)), { merge: true });
+  }
+
+  await batch.commit();
+
+  for (const item of inventoryItems) {
+    await firestore
+      .collection('resources')
+      .doc(item.volunteerId)
+      .collection('items')
+      .doc(item.itemId)
+      .set(JSON.parse(JSON.stringify(item)), { merge: true });
+  }
+
+  console.log(`✅ Upserted ${volunteers.length} seed volunteers with inventory items.`);
+}
+
+async function clearExistingData() {
+  console.log('Clearing existing seeded reports...');
+
+  const snapshot = await firestore.collection('needReports').get();
+  const batch = firestore.batch();
+
+  snapshot.docs
+    .filter((doc) => doc.id.startsWith('seed-report-'))
+    .forEach((doc) => batch.delete(doc.ref));
+
+  await batch.commit();
+
+  const volunteerIds = ['seed-volunteer-001', 'seed-volunteer-002', 'dev-user-001'];
+  for (const volunteerId of volunteerIds) {
+    const inventorySnapshot = await firestore.collection('resources').doc(volunteerId).collection('items').get();
+    const inventoryBatch = firestore.batch();
+    inventorySnapshot.docs.forEach((doc) => inventoryBatch.delete(doc.ref));
+    await inventoryBatch.commit();
+    await firestore.collection('volunteers').doc(volunteerId).delete().catch(() => undefined);
+  }
+
+  const dispatchSnapshot = await firestore.collection('dispatchTasks').get();
+  const dispatchBatch = firestore.batch();
+  dispatchSnapshot.docs
+    .filter((doc) => doc.id.startsWith('seed-task-'))
+    .forEach((doc) => dispatchBatch.delete(doc.ref));
+  await dispatchBatch.commit();
+
+  console.log('✅ Cleared seeded need reports, dispatch tasks, and inventory volunteers');
+}
+
+async function main() {
+  try {
+    const args = process.argv.slice(2);
+    const shouldClear = args.includes('--clear');
+    const count = parseInt(args.find((arg) => arg.startsWith('--count='))?.split('=')[1] || '24', 10);
+
+    console.log('🌱 SevaSetu Seed Data Script');
+    console.log('============================\n');
+
+    if (shouldClear) {
+      await clearExistingData();
+      console.log('');
+    }
+
+    await generateSeedReports(count);
+    await generateSeedVolunteersAndInventory();
+
+    console.log('\n✨ Seed data generation complete!');
+    console.log('Seeded reports now include urgencyScore, urgencyBreakdown, and volunteer inventory examples.');
+    process.exit(0);
+  } catch (error) {
+    console.error('❌ Error generating seed data:', error);
+    process.exit(1);
+  }
+}
+
+if (require.main === module) {
+  void main();
+}
+
+export { buildSeedReports, generateSeedReports, generateSeedVolunteersAndInventory, clearExistingData };

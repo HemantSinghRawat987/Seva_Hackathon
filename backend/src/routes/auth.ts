@@ -1,0 +1,265 @@
+/**
+ * Authentication Routes
+ * PRD: Firebase Phone OTP Authentication
+ * 
+ * Handles:
+ * - Verify Firebase ID token
+ * - Get/update user profile
+ * - DEV MODE bypass for prototype usage
+ */
+
+import { Router, Request, Response, NextFunction } from 'express';
+import { getAuth, getFirestore } from '../config/firebase';
+import { createError } from '../middleware/errorHandler';
+import { UserRole, UserRoleType } from '../models/User';
+
+export const authRouter = Router();
+
+// Prototype auth bypass can be enabled explicitly for hosted demos.
+const DEV_MODE = process.env.NODE_ENV === 'development' || process.env.PROTOTYPE_AUTH_BYPASS === 'true';
+const DEV_TOKEN = 'dev-mock-token-for-prototype';
+
+const DEV_USER = {
+  uid: 'dev-user-001',
+  phoneNumber: '+919999999999',
+};
+const DEV_USER_PROFILE = {
+  id: 'dev-user-001',
+  phoneNumber: '+919999999999',
+  displayName: 'Dev User (NGO Admin)',
+  role: 'ngo_admin' as UserRoleType,
+  preferredLanguage: 'en',
+  reportsSubmitted: 25,
+  reportsResolved: 20,
+};
+
+function buildDefaultUserProfile(input: { uid: string; phoneNumber?: string | null }) {
+  const now = new Date().toISOString();
+  return {
+    id: input.uid,
+    phoneNumber: input.phoneNumber || null,
+    role: UserRole.FIELD_WORKER as UserRoleType,
+    preferredLanguage: 'hi',
+    reportsSubmitted: 0,
+    reportsResolved: 0,
+    createdAt: now,
+    updatedAt: now,
+    lastLoginAt: now,
+  };
+}
+
+export async function ensureUserProfile(uid: string, phoneNumber?: string | null) {
+  const db = getFirestore();
+  const userRef = db.collection('users').doc(uid);
+  const userDoc = await userRef.get();
+
+  if (userDoc.exists) {
+    return { userRef, existed: true, data: userDoc.data() };
+  }
+
+  const data = buildDefaultUserProfile({ uid, phoneNumber });
+  await userRef.set(data);
+  return { userRef, existed: false, data };
+}
+
+export interface AuthenticatedRequest extends Request {
+  user?: {
+    uid: string;
+    phoneNumber?: string;
+  };
+  userProfile?: {
+    role?: UserRoleType;
+    [key: string]: unknown;
+  };
+}
+
+// Middleware to verify Firebase ID token (with DEV MODE bypass)
+export async function verifyToken(req: Request, res: Response, next: NextFunction) {
+  try {
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader?.startsWith('Bearer ')) {
+      throw createError('No token provided', 401, 'AUTH_NO_TOKEN');
+    }
+
+    const token = authHeader.split('Bearer ')[1];
+
+    // DEV MODE: Accept mock token
+    if (DEV_MODE && token === DEV_TOKEN) {
+      (req as AuthenticatedRequest).user = DEV_USER;
+      (req as AuthenticatedRequest).userProfile = DEV_USER_PROFILE;
+      return next();
+    }
+
+    const decodedToken = await getAuth().verifyIdToken(token);
+    
+    // Attach user info to request
+    (req as AuthenticatedRequest).user = {
+      uid: decodedToken.uid,
+      phoneNumber: decodedToken.phone_number,
+    };
+    
+    next();
+  } catch (error: any) {
+    if (error.code === 'auth/id-token-expired') {
+      next(createError('Token expired', 401, 'AUTH_TOKEN_EXPIRED'));
+    } else if (error.statusCode) {
+      next(error);
+    } else {
+      next(createError('Invalid token', 401, 'AUTH_INVALID_TOKEN'));
+    }
+  }
+}
+
+export function requireRoles(...allowedRoles: UserRoleType[]) {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const authReq = req as AuthenticatedRequest;
+      const uid = authReq.user?.uid;
+
+      if (!uid) {
+        throw createError('Unauthorized', 401, 'AUTH_UNAUTHORIZED');
+      }
+
+      // DEV MODE: Use dev profile
+      if (DEV_MODE && uid === DEV_USER.uid) {
+        authReq.userProfile = DEV_USER_PROFILE;
+        const devRole = DEV_USER_PROFILE.role;
+        if (!allowedRoles.includes(devRole)) {
+          throw createError('Forbidden', 403, 'AUTH_FORBIDDEN');
+        }
+        return next();
+      }
+
+      const { userRef } = await ensureUserProfile(uid, authReq.user?.phoneNumber);
+      const userDoc = await userRef.get();
+
+      if (!userDoc.exists) {
+        throw createError('User profile not found', 404, 'USER_NOT_FOUND');
+      }
+
+      const userData = userDoc.data() as { role?: UserRoleType };
+      const role = userData?.role;
+
+      if (!role || !allowedRoles.includes(role)) {
+        throw createError('Forbidden', 403, 'AUTH_FORBIDDEN');
+      }
+
+      authReq.userProfile = userData;
+      next();
+    } catch (error) {
+      next(error);
+    }
+  };
+}
+
+// POST /api/auth/verify - Verify token and get/create user
+authRouter.post('/verify', verifyToken, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+    const { uid, phoneNumber } = authReq.user || {};
+    if (!uid) {
+      throw createError('Unauthorized', 401, 'AUTH_UNAUTHORIZED');
+    }
+
+    // DEV MODE: Return dev user profile directly
+    if (DEV_MODE && uid === DEV_USER.uid) {
+      return res.json({
+        success: true,
+        data: {
+          user: DEV_USER_PROFILE,
+          isNewUser: false,
+        },
+      });
+    }
+
+    const { userRef, existed, data } = await ensureUserProfile(uid, phoneNumber);
+
+    const lastLoginAt = new Date().toISOString();
+    await userRef.set({ lastLoginAt, updatedAt: lastLoginAt }, { merge: true });
+
+    const userData = { ...data, lastLoginAt, updatedAt: lastLoginAt };
+    const isNewUser = !existed;
+
+    res.json({
+      success: true,
+      data: {
+        user: userData,
+        isNewUser,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// GET /api/auth/me - Get current user profile
+authRouter.get('/me', verifyToken, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+    const { uid } = authReq.user || {};
+    if (!uid) {
+      throw createError('Unauthorized', 401, 'AUTH_UNAUTHORIZED');
+    }
+
+    // DEV MODE: Return dev user profile
+    if (DEV_MODE && uid === DEV_USER.uid) {
+      return res.json({
+        success: true,
+        data: {
+          user: DEV_USER_PROFILE,
+        },
+      });
+    }
+
+    const { userRef } = await ensureUserProfile(uid, authReq.user?.phoneNumber);
+    const userDoc = await userRef.get();
+
+    if (!userDoc.exists) {
+      throw createError('User not found', 404, 'USER_NOT_FOUND');
+    }
+
+    res.json({
+      success: true,
+      data: {
+        user: userDoc.data(),
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// PATCH /api/auth/me - Update user profile
+authRouter.patch('/me', verifyToken, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { uid } = (req as AuthenticatedRequest).user || {};
+    if (!uid) {
+      throw createError('Unauthorized', 401, 'AUTH_UNAUTHORIZED');
+    }
+    const { displayName, preferredLanguage, avatarUrl } = req.body;
+    
+    const { userRef } = await ensureUserProfile(uid, (req as AuthenticatedRequest).user?.phoneNumber);
+    
+    const updates: any = {
+      updatedAt: new Date().toISOString(),
+    };
+    
+    if (displayName) updates.displayName = displayName;
+    if (preferredLanguage) updates.preferredLanguage = preferredLanguage;
+    if (avatarUrl) updates.avatarUrl = avatarUrl;
+    
+    await userRef.set(updates, { merge: true });
+    
+    const updatedDoc = await userRef.get();
+
+    res.json({
+      success: true,
+      data: {
+        user: updatedDoc.data(),
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+});

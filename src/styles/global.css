@@ -1,0 +1,524 @@
+/* ===================================
+   GLOBAL CSS — SevaSetu Foundation
+   =================================== */
+
+/* Reset & Base */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ===================================
+   COLOR SYSTEM — Light Mode
+   =================================== */
+:root {
+  /* ── LEGACY TOKENS (kept for backward compat) ── */
+  --bg:               #F5EFE6;
+  --bg-2:             #EDE5D8;
+  --bg-3:             #E4D3B8;
+  --bg-dark:          #1C0E06;
+  --bg-dark-2:        #231608;
+
+  --text:             #1C120A;
+  --text-muted:       #6B5540;
+  --text-subtle:      #9C8570;
+  --text-inverse:     #FFFDF9;
+
+  --accent:           #D4622A;
+  --accent-hover:     #BE5522;
+  --accent-light:     rgba(212, 98, 42, 0.08);
+  --accent-glow:      rgba(212, 98, 42, 0.22);
+
+  --jade:             #1A7A4A;
+  --jade-hover:       #156038;
+  --jade-light:       rgba(26, 122, 74, 0.10);
+  --jade-glow:        rgba(26, 122, 74, 0.20);
+
+  --amber:            #B06B0A;
+  --amber-light:      rgba(176, 107, 10, 0.10);
+
+  --border:           rgba(80, 50, 20, 0.10);
+  --border-strong:    rgba(80, 50, 20, 0.22);
+  --border-focus:     var(--accent);
+
+  --shadow-sm:  0 1px 2px rgba(44, 24, 8, 0.09), 0 4px 16px rgba(44, 24, 8, 0.07);
+  --shadow-md:  0 2px 4px rgba(44, 24, 8, 0.09), 0 8px 28px rgba(44, 24, 8, 0.09);
+  --shadow-lg:  0 4px 8px rgba(44, 24, 8, 0.09), 0 16px 52px rgba(44, 24, 8, 0.11);
+  --shadow-accent: 0 2px 4px rgba(212, 98, 42, 0.15), 0 8px 32px rgba(212, 98, 42, 0.14);
+
+  --radius-sm:   6px;
+  --radius-md:   12px;
+  --radius-lg:   18px;
+  --radius-xl:   26px;
+  --radius-pill: 9999px;
+
+  /* Internal surface layers — light mode */
+  --surface-1:        rgba(44, 24, 16, 0.03);
+  --surface-2:        rgba(44, 24, 16, 0.06);
+  --surface-3:        rgba(44, 24, 16, 0.09);
+  --surface-glass:    rgba(255, 255, 255, 0.72);
+  --glass-border:     rgba(80, 50, 20, 0.10);
+  --glass-glow:       rgba(212, 98, 42, 0.06);
+  --internal-grain:   url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+
+  /* ── ENHANCED TOKENS (new system) ── */
+  --font-display: 'Bricolage Grotesque', system-ui, sans-serif;
+  --font-body:    'General Sans', -apple-system, sans-serif;
+  --font-mono:    'JetBrains Mono', 'Fira Code', monospace;
+
+  /* Semantic backgrounds */
+  --bg-base:      #F5EFE6;
+  --bg-surface:   #FAF6F0;
+  --bg-elevated:  #FFFDF9;
+  --bg-inset:     #EDE5D8;
+  --bg-accent-wash: rgba(212, 98, 42, 0.06);
+
+  /* Semantic accent */
+  --accent-wash:  rgba(212, 98, 42, 0.08);
+
+  /* Semantic status */
+  --jade-wash:    rgba(26, 122, 74, 0.08);
+  --jade-light-solid: #C8EDD8;
+  --amber-wash:   rgba(176, 107, 10, 0.08);
+  --amber-light-solid: #FDDFA0;
+  --critical:     #C13B2A;
+  --critical-light: #F8C4BC;
+  --critical-wash: rgba(193, 59, 42, 0.08);
+
+  /* Semantic text */
+  --text-primary:   #1C120A;
+  --text-secondary: #6B5540;
+  --text-tertiary:  #9C8570;
+
+  /* 4-tier border system */
+  --border-hairline: rgba(80, 50, 20, 0.08);
+  --border-subtle:   rgba(80, 50, 20, 0.12);
+  --border-default:  rgba(80, 50, 20, 0.18);
+
+  /* Extra shadow tokens */
+  --shadow-xs:  0 1px 2px rgba(44, 24, 8, 0.08);
+  --shadow-xl:  0 8px 16px rgba(44, 24, 8, 0.10), 0 32px 80px rgba(44, 24, 8, 0.12);
+
+  /* Glow tokens */
+  --glow-accent:   0 0 0 3px rgba(212, 98, 42, 0.20);
+  --glow-jade:     0 0 0 3px rgba(26, 122, 74, 0.20);
+  --glow-critical: 0 0 0 3px rgba(193, 59, 42, 0.20);
+
+  /* Extended radius */
+  --radius-xs:  4px;
+  --radius-2xl: 36px;
+  --radius-full: 9999px;
+
+  /* Spacing scale — 8px grid */
+  --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px;
+  --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-10: 40px;
+  --space-12: 48px; --space-16: 64px; --space-20: 80px; --space-24: 96px;
+
+  /* Motion tokens */
+  --ease-out:    cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 350ms;
+}
+
+/* ===================================
+   COLOR SYSTEM — Dark Mode
+   Deep espresso — NOT a darkened light theme.
+   Own personality: ember glow, warm amber borders.
+   =================================== */
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* ── LEGACY TOKENS ── */
+  --bg:               #18100A;
+  --bg-2:             #221610;
+  --bg-3:             #2C1E14;
+  --bg-dark:          #0F0804;
+  --bg-dark-2:        #1C0E06;
+
+  --text:             #F2EAE0;
+  --text-muted:       #B09070;
+  --text-subtle:      #7A6050;
+  --text-inverse:     #1C120A;
+
+  --accent:           #E07040;
+  --accent-hover:     #F08050;
+  --accent-light:     rgba(212, 98, 42, 0.14);
+  --accent-glow:      rgba(224, 112, 64, 0.28);
+
+  --jade:             #2AAA66;
+  --jade-hover:       #3CC077;
+  --jade-light:       rgba(42, 170, 102, 0.14);
+  --jade-glow:        rgba(42, 170, 102, 0.24);
+
+  --amber:            #D4880A;
+  --amber-light:      rgba(212, 136, 10, 0.14);
+
+  --border:           rgba(255, 200, 150, 0.09);
+  --border-strong:    rgba(255, 200, 150, 0.18);
+
+  --shadow-sm:  0 1px 2px rgba(0, 0, 0, 0.5), 0 4px 16px rgba(0, 0, 0, 0.3);
+  --shadow-md:  0 2px 4px rgba(0, 0, 0, 0.5), 0 8px 28px rgba(0, 0, 0, 0.4);
+  --shadow-lg:  0 4px 8px rgba(0, 0, 0, 0.6), 0 16px 52px rgba(0, 0, 0, 0.4);
+  --shadow-accent: 0 2px 4px rgba(224, 112, 64, 0.20), 0 8px 32px rgba(224, 112, 64, 0.18);
+
+  --surface-1:        rgba(255, 200, 150, 0.04);
+  --surface-2:        rgba(255, 200, 150, 0.07);
+  --surface-3:        rgba(255, 200, 150, 0.11);
+  --surface-glass:    rgba(24, 16, 10, 0.85);
+  --glass-border:     rgba(255, 200, 150, 0.08);
+  --glass-glow:       rgba(224, 112, 64, 0.08);
+
+  /* ── ENHANCED TOKENS — Dark mode ── */
+  --bg-base:      #18100A;
+  --bg-surface:   #221610;
+  --bg-elevated:  #2C1E14;
+  --bg-inset:     #120C06;
+  --bg-accent-wash: rgba(212, 98, 42, 0.12);
+
+  --accent-wash:  rgba(212, 98, 42, 0.12);
+  --jade-wash:    rgba(42, 170, 102, 0.10);
+  --jade-light-solid: rgba(42, 170, 102, 0.22);
+  --amber-wash:   rgba(176, 107, 10, 0.10);
+  --amber-light-solid: rgba(176, 107, 10, 0.25);
+  --critical:     #E05040;
+  --critical-light: rgba(193, 59, 42, 0.25);
+  --critical-wash: rgba(193, 59, 42, 0.10);
+
+  --text-primary:   #F2EAE0;
+  --text-secondary: #B09070;
+  --text-tertiary:  #7A6050;
+
+  --border-hairline: rgba(255, 200, 150, 0.06);
+  --border-subtle:   rgba(255, 200, 150, 0.09);
+  --border-default:  rgba(255, 200, 150, 0.14);
+
+  --shadow-xs:  0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-xl:  0 8px 16px rgba(0, 0, 0, 0.6), 0 32px 80px rgba(212, 98, 42, 0.08);
+
+  --glow-accent:   0 0 0 3px rgba(224, 112, 64, 0.28);
+  --glow-jade:     0 0 0 3px rgba(42, 170, 102, 0.28);
+  --glow-critical: 0 0 0 3px rgba(224, 80, 64, 0.28);
+}
+
+/* Dark mode image adjustment */
+[data-theme="dark"] img {
+  filter: brightness(0.88) contrast(1.04);
+}
+
+/* ===================================
+   BASE STYLES
+   =================================== */
+html {
+  scroll-behavior: auto;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+body {
+  font-family: 'General Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: 400;
+  font-size: 1rem;
+  line-height: 1.75;
+  color: var(--text);
+  background-color: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Text Selection */
+::selection {
+  background: var(--accent-light);
+  color: var(--text);
+}
+
+/* ===================================
+   TYPOGRAPHY CLASSES
+   =================================== */
+
+/* Display — hero titles */
+.display {
+  font-family: 'Bricolage Grotesque', Georgia, serif;
+  font-weight: 800;
+  line-height: 0.88;
+  letter-spacing: -0.04em;
+  font-size: clamp(4rem, 11vw, 9.5rem);
+}
+
+/* Section title */
+.section-title {
+  font-family: 'Bricolage Grotesque', Georgia, serif;
+  font-weight: 800;
+  font-size: clamp(2.5rem, 6vw, 5.5rem);
+  line-height: 0.92;
+  letter-spacing: -0.03em;
+}
+
+/* Subtitle */
+.sub-title {
+  font-family: 'Bricolage Grotesque', Georgia, serif;
+  font-weight: 700;
+  font-size: clamp(1.5rem, 3vw, 2.5rem);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+/* Eyebrow — small all-caps label */
+.eyebrow {
+  font-family: 'General Sans', -apple-system, sans-serif;
+  font-weight: 600;
+  font-size: 0.6875rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.eyebrow-jade {
+  color: var(--jade);
+}
+
+/* Body large */
+.body-lg {
+  font-size: 1.125rem;
+  line-height: 1.7;
+}
+
+/* Caption */
+.caption {
+  font-family: 'General Sans', sans-serif;
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+/* Devanagari — DECORATIVE ONLY */
+.devanagari-bg {
+  font-family: 'Noto Sans Devanagari', sans-serif;
+  font-weight: 900;
+  user-select: none;
+  pointer-events: none;
+  position: absolute;
+  opacity: 0.03;
+  color: currentColor;
+  line-height: 0.85;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+/* Tabular numbers for stats */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===================================
+   CONTAINER UTILITIES
+   =================================== */
+.container {
+  width: min(1200px, 100% - clamp(2rem, 5vw, 6rem) * 2);
+  margin-inline: auto;
+}
+
+.container--narrow {
+  max-width: 800px;
+}
+
+.container--wide {
+  max-width: 1440px;
+}
+
+/* ===================================
+   BUTTON SYSTEM
+   =================================== */
+.btn {
+  font-family: 'General Sans', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  border-radius: var(--radius-md);
+  padding: 0.688rem 1.25rem 0.562rem;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease,
+              background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  text-decoration: none;
+}
+
+/* Primary — terra cotta filled */
+.btn-primary {
+  background: var(--accent);
+  color: #F5EDE0;
+  border: none;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-accent);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+  filter: brightness(0.92);
+}
+
+/* Ghost */
+.btn-ghost {
+  background: transparent;
+  border: 1.5px solid var(--border-strong);
+  color: var(--text);
+}
+
+.btn-ghost:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Inverse — for use ON accent/terra-cotta backgrounds */
+.btn-inverse {
+  background: #F5EDE0;
+  color: var(--accent);
+  border: none;
+}
+
+.btn-inverse:hover {
+  background: #FFFFFF;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(28, 14, 6, 0.25);
+}
+
+/* ===================================
+   DIVIDER
+   =================================== */
+.divider {
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--border) 20%, var(--border) 80%, transparent);
+}
+
+/* ===================================
+   FOCUS STATES
+   =================================== */
+:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
+  border-radius: var(--radius-sm);
+}
+
+/* ===================================
+   SKIP LINK
+   =================================== */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--accent);
+  color: var(--text-inverse);
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-md);
+  font-family: 'General Sans', sans-serif;
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-decoration: none;
+  z-index: 9999;
+  transition: top 0.2s ease;
+}
+
+.skip-link:focus {
+  top: 1rem;
+}
+
+/* ===================================
+   ENTRY ANIMATIONS — CSS-only entrance
+   Apply via class. No framer-motion needed.
+   =================================== */
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(16px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes marquee {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes livePulse {
+  0%   { transform: scale(1);   opacity: 0.5; }
+  70%  { transform: scale(2.5); opacity: 0; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+
+@keyframes criticalPulse {
+  0%, 100% { border-color: rgba(193, 59, 42, 0.20); }
+  50%       { border-color: rgba(193, 59, 42, 0.50); }
+}
+
+@keyframes stalledPulse {
+  0%, 100% { border-left-color: var(--amber); }
+  50%       { border-left-color: transparent; }
+}
+
+@keyframes crisisPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(193, 59, 42, 0.4); }
+  50%       { box-shadow: 0 0 0 8px rgba(193, 59, 42, 0); }
+}
+
+/* Stagger utility classes */
+.enter-1 { animation: fadeUp 0.3s var(--ease-out) both; animation-delay: 0ms; }
+.enter-2 { animation: fadeUp 0.3s var(--ease-out) both; animation-delay: 50ms; }
+.enter-3 { animation: fadeUp 0.3s var(--ease-out) both; animation-delay: 100ms; }
+.enter-4 { animation: fadeUp 0.3s var(--ease-out) both; animation-delay: 150ms; }
+.enter-5 { animation: fadeUp 0.3s var(--ease-out) both; animation-delay: 200ms; }
+.enter-6 { animation: fadeUp 0.3s var(--ease-out) both; animation-delay: 250ms; }
+
+/* ===================================
+   RESPONSIVE BREAKPOINTS
+   =================================== */
+@media (max-width: 1200px) {
+  /* Tablet landscape */
+}
+
+@media (max-width: 900px) {
+  /* Tablet portrait */
+}
+
+@media (max-width: 768px) {
+  /* Mobile landscape */
+}
+
+@media (max-width: 480px) {
+  /* Small mobile */
+}
+
+/* ===================================
+   CUSTOM CURSOR — Hide default on desktop
+   =================================== */
+@media (hover: hover) and (pointer: fine) {
+  html.has-custom-cursor,
+  html.has-custom-cursor * {
+    cursor: none !important;
+  }
+}
